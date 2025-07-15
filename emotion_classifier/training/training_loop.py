@@ -5,7 +5,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.metrics import precision_recall_fscore_support
 from tqdm import tqdm
 
-def train_model(model, train_loader, val_loader, num_epochs, device, save_path="best_model.pth", lr=0.001):
+def train_model(model, train_loader, val_loader, num_epochs, device, save_path="best_model.pth", lr=0.001 , use_tqdm=True):
     """
     Training loop for the emotion classifier.
 
@@ -45,7 +45,7 @@ def train_model(model, train_loader, val_loader, num_epochs, device, save_path="
         correct = 0
         total = 0
 
-        train_bar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Train]")
+        train_bar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Train]") if use_tqdm else train_loader
         for inputs, labels in train_bar:
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
@@ -71,7 +71,7 @@ def train_model(model, train_loader, val_loader, num_epochs, device, save_path="
         all_preds = []
         all_labels = []
 
-        val_bar = tqdm(val_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Val]")
+        val_bar = tqdm(val_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Val]") if use_tqdm else val_loader
         with torch.no_grad():
             for inputs, labels in val_bar:
                 inputs, labels = inputs.to(device), labels.to(device)
@@ -126,7 +126,7 @@ def train_model(model, train_loader, val_loader, num_epochs, device, save_path="
     return history
 
 
-def test_model(model, test_loader, device):
+def test_model(model, test_loader, device , use_tqdm=True):
     """
     Test function to evaluate the model on a test dataset.
 
@@ -152,7 +152,7 @@ def test_model(model, test_loader, device):
     all_preds = []
     all_labels = []
 
-    test_bar = tqdm(test_loader, desc="Testing")
+    test_bar = tqdm(test_loader, desc="Testing") if use_tqdm else test_loader
     with torch.no_grad():
         for inputs, labels in test_bar:
             inputs, labels = inputs.to(device), labels.to(device)
