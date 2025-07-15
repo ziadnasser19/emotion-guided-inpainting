@@ -6,8 +6,8 @@ from visualizations.visualize import plot_loss_curve, plot_accuracy_curve, plot_
 
 def main():
     # Config
-    label_file='/kaggle/input/expwds/label/label.lst',
-    img_dir='/kaggle/input/expwds/origin',
+    label_file='/kaggle/input/expwds/label/label.lst'
+    img_dir='/kaggle/input/expwds/origin'
     batch_size = 32
     num_classes = 7
     num_epochs = 30
@@ -16,7 +16,7 @@ def main():
     fine_tune_mode = "partial"  # "none", "partial", or "full"
 
     # Prepare data
-    data_module = ExpWDataModule(label_file, img_dir, batch_size, random_seed = 42)
+    data_module = ExpWDataModule(label_file, img_dir, batch_size, r_s = 42)
     data_module.setup()
 
     train_loader = data_module.train_dataloader()

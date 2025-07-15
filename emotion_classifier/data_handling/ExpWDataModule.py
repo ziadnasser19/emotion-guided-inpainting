@@ -3,12 +3,13 @@ from sklearn.model_selection import train_test_split
 from torchvision import transforms
 
 class ExpWDataModule:
-    def __init__(self, label_file, img_dir, batch_size=32, val_split=0.15, test_split=0.15, random_state = rand_state):
+    def __init__(self, label_file, img_dir, batch_size=32, val_split=0.15, test_split=0.15, r_s = 42):
         self.label_file = label_file
         self.img_dir = img_dir
         self.batch_size = batch_size
         self.val_split = val_split
         self.test_split = test_split
+        self.random_seed = r_s
 
         # Transforms
         self.train_transform = transforms.Compose([
@@ -41,8 +42,8 @@ class ExpWDataModule:
         val_size = int(self.val_split * total_size)
         test_size = int(self.test_split * total_size)
 
-        train_idx, tmp_idx = train_test_split(indices, test_size=val_size + test_size, random_state=rand_state)
-        val_idx, test_idx = train_test_split(tmp_idx, test_size=test_size, random_state=rand_state)
+        train_idx, tmp_idx = train_test_split(indices, test_size=val_size + test_size, random_state=self.random_seed)
+        val_idx, test_idx = train_test_split(tmp_idx, test_size=test_size, random_state=self.random_seed)
 
         # Create subsets
         self.train_dataset = Subset(base_dataset, train_idx)
