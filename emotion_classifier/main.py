@@ -16,7 +16,7 @@ def main():
     fine_tune_mode = "partial"  # "none", "partial", or "full"
 
     # Prepare data
-    data_module = ExpWDataModule(label_file, img_dir, batch_size)
+    data_module = ExpWDataModule(label_file, img_dir, batch_size, random_seed = 42)
     data_module.setup()
 
     train_loader = data_module.train_dataloader()
