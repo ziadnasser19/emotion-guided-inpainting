@@ -175,4 +175,4 @@ def test_model(model, test_loader, device , use_tqdm=True):
     print(f"\n Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}%")
     print(f"Test Precision: {precision:.4f}, Test Recall: {recall:.4f}, Test F1: {f1:.4f}")
 
-    return test_loss, test_acc, precision, recall, f1
+    return test_loss, test_acc, precision, recall, f1,all_preds, all_labels
