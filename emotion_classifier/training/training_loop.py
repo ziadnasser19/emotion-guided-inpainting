@@ -22,7 +22,7 @@ def train_model(model, train_loader, val_loader, num_epochs, device, save_path="
         history: Dictionary containing training and validation loss/accuracy per epoch
     """
     model = model.to(device)
-    criterion = nn.CrossEntropyLoss()
+    criterion = WeightedCrossEntropyLoss(train_loader.train_dataset, device = device)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
 
@@ -145,7 +145,7 @@ def test_model(model, test_loader, device , use_tqdm=True):
     model = model.to(device)
     model.eval()
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = WeightedCrossEntropyLoss(test_loader.train_dataset, device = device)
     test_loss = 0.0
     correct = 0
     total = 0
