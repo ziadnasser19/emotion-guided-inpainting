@@ -10,9 +10,9 @@ def main():
     # Config
     label_file='/kaggle/input/expwds/label/label.lst'
     img_dir='/kaggle/input/expwds/origin'
-    batch_size = 32
+    batch_size = 128
     num_classes = 7
-    num_epochs = 30
+    num_epochs = 50
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     save_path = "best_emotion_model.pth"
     fine_tune_mode = "partial"  # "none", "partial", or "full"

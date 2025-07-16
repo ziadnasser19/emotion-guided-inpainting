@@ -8,7 +8,7 @@ from tqdm import tqdm
 from training.weighted_cross_entropy import WeightedCrossEntropyLoss
 
 
-def train_model(model, train_loader, val_loader, num_epochs, device, save_path="best_model.pth", lr=0.001 , use_tqdm=True, train_dataset=None):
+def train_model(model, train_loader, val_loader, num_epochs, device, save_path="best_model.pth", lr=0.01 , use_tqdm=True, train_dataset=None):
     """
     Training loop for the emotion classifier.
 
@@ -25,9 +25,9 @@ def train_model(model, train_loader, val_loader, num_epochs, device, save_path="
         history: Dictionary containing training and validation loss/accuracy per epoch
     """
     model = model.to(device)
-    criterion = WeightedCrossEntropyLoss(train_loader.train_dataset, device = device)
+    criterion = WeightedCrossEntropyLoss(train_dataset, device = device)
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=8, verbose=True)
 
     history = {
         'train_loss': [], 'train_acc': [],
@@ -39,7 +39,7 @@ def train_model(model, train_loader, val_loader, num_epochs, device, save_path="
     best_model_path = save_path
 
     # Optional: Early stopping
-    early_stop_patience = 10
+    early_stop_patience = 20
     no_improve_epochs = 0
 
     for epoch in range(num_epochs):
@@ -148,7 +148,7 @@ def test_model(model, test_loader, device , use_tqdm=True, test_dataset=None):
     model = model.to(device)
     model.eval()
 
-    criterion = WeightedCrossEntropyLoss(test_loader.train_dataset, device = device)
+    criterion = WeightedCrossEntropyLoss(test_dataset, device = device)
     test_loss = 0.0
     correct = 0
     total = 0
