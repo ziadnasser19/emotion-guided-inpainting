@@ -1,8 +1,10 @@
 import torch
-from datahandling.expw_data_module import ExpWDataModule
-from model.emotion_detector import EmotionDetector
-from training.train import train_model, test_model
-from visualizations.visualize import plot_loss_curve, plot_accuracy_curve, plot_confusion_matrix
+
+from data_handling.ExpWDataModule import *
+from models.model_emotion import EmotionDetector
+from training.training_loop import train_model, test_model
+from visualization.Visualization import *
+
 
 def main():
     # Config
@@ -26,11 +28,19 @@ def main():
     # Initialize model
     model = EmotionDetector(num_classes=num_classes, fine_tune=fine_tune_mode)
 
-    # Train
-    history = train_model(model, train_loader, val_loader, num_epochs, device, save_path)
+    # Access original dataset for loss calculation
+    original_train_dataset = data_module.train_dataset.dataset
 
+    # Train
+    history = train_model(model, train_loader, val_loader, num_epochs, device, save_path,
+                          train_dataset=original_train_dataset)
+
+
+
+
+    original_test_dataset = data_module.test_dataset.dataset
     # Test
-    test_loss, test_acc, precision, recall, f1, all_preds, all_labels = test_model(model, test_loader, device)
+    test_loss, test_acc, precision, recall, f1, all_preds, all_labels = test_model(model, test_loader, device, test_dataset=original_test_dataset)
 
     # Visualizations
     plot_loss_curve(history['train_loss'], history['val_loss'])

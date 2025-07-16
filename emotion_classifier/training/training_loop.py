@@ -5,7 +5,10 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from sklearn.metrics import precision_recall_fscore_support
 from tqdm import tqdm
 
-def train_model(model, train_loader, val_loader, num_epochs, device, save_path="best_model.pth", lr=0.001 , use_tqdm=True):
+from training.weighted_cross_entropy import WeightedCrossEntropyLoss
+
+
+def train_model(model, train_loader, val_loader, num_epochs, device, save_path="best_model.pth", lr=0.001 , use_tqdm=True, train_dataset=None):
     """
     Training loop for the emotion classifier.
 
@@ -126,7 +129,7 @@ def train_model(model, train_loader, val_loader, num_epochs, device, save_path="
     return history
 
 
-def test_model(model, test_loader, device , use_tqdm=True):
+def test_model(model, test_loader, device , use_tqdm=True, test_dataset=None):
     """
     Test function to evaluate the model on a test dataset.
 
