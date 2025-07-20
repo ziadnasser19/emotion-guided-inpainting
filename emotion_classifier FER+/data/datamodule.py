@@ -11,7 +11,7 @@ class FERDataModule:
         self.criterion = criterion
         self.image_size = (image_size, image_size)
         self.emotion_map = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 
-                            4: 'Sad', 5: 'Surprise', 6: 'Neutral', 7: 'Contempt'}
+                            4: 'Sad', 5: 'Surprise', 6: 'Neutral'}
 
         # Define transforms
         self.train_transform = train_transform or transforms.Compose([

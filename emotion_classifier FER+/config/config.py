@@ -4,7 +4,7 @@ class Config:
     def __init__(self):
         self.DATASET_PATH = "/kaggle/working/fer2013"
         self.MODEL_NAME = "EfficientNet"
-        self.NUM_CLASSES = 8
+        self.NUM_CLASSES = 7
         self.BATCH_SIZE = 128 
         self.NUM_EPOCHS = 30
         self.LEARNING_RATE = 1e-3  
