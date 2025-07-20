@@ -4,7 +4,7 @@ from torchvision.models import resnet18, ResNet18_Weights
 
 class EmotionDetector(nn.Module):
     def __init__(self, num_classes=8, dropout_p=0.5):
-        super(EmotionDetectorResNet18, self).__init__()
+        super(EmotionDetector, self).__init__()
 
         # Load pretrained ResNet-18
         self.model = resnet18(weights=ResNet18_Weights.DEFAULT)
