@@ -42,3 +42,12 @@ history, best_epoch, best_f1, best_acc, best_model = trainer.train()
 Utils.plot_loss_curve(history['train_loss'], history['val_loss'], show=True, save=True)
 Utils.plot_accuracy_curve(history['train_acc'], history['val_acc'], show=True, save=True)
 Utils.plot_f1_score(history['val_f1'], show=True, save=True)
+
+tester = Test(best_model, test_loader, criterion, config)
+
+
+# Run test and get predictions
+test_loss, test_acc, precision, recall, f1, all_preds, all_labels = tester.test()
+
+# Plot confusion matrix
+Utils.plot_confusion_matrix(all_labels, all_preds, class_names=data_module.get_class_names())
