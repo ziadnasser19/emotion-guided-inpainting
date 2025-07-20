@@ -13,7 +13,7 @@ class FERPlusDataset(Dataset):
         self.data = self.data[self.data['Usage'] == usage].reset_index(drop=True)
         self.transform = transform
         self.emotion_map = emotion_map or {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 
-                                           4: 'Sad', 5: 'Surprise', 6: 'Neutral'}
+                                           4: 'Sad', 5: 'Surprise', 6: 'Neutral', 7: 'Contempt'}
         
     def __len__(self):
         return len(self.data)
