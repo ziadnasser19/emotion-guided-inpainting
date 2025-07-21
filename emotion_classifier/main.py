@@ -2,11 +2,15 @@ import os
 import torch
 import kagglehub
 from data import FERDataModule
-from models import EmotionDetector
-from training import Trainer, Test, get_criterion
-from utils import Utils
-from config import Config
+
 import torch.nn as nn
+
+from emotion_classifier.config import Config
+from emotion_classifier.models.resnet import EmotionDetector
+from emotion_classifier.training.losses import get_criterion
+from emotion_classifier.training.tester import Test
+from emotion_classifier.training.trainer import Trainer
+from emotion_classifier.utils.plotting import Utils
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

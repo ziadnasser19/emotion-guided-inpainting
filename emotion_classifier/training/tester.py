@@ -2,6 +2,7 @@ from sklearn.metrics import precision_recall_fscore_support
 import torch
 from tqdm import tqdm
 from .losses import *
+from ..utils.plotting import Utils
 
 
 class Test:

@@ -6,6 +6,9 @@ import random
 import numpy as np
 import os
 
+from emotion_classifier.config import Config
+
+
 class Utils:
     @staticmethod
     def _maybe_save(fig, filename, save):

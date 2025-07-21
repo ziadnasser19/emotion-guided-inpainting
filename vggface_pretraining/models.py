@@ -2,8 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vggface_pretraining.models_utils.model_utils import load_backbone
-
+from vggface_pretraining.models_utils.backbone_loader import load_backbone
 from vggface_pretraining.models_utils.triplet_network_loader import load_triplet_model
 
 
