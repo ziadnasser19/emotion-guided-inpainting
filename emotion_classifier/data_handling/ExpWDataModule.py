@@ -2,6 +2,9 @@ from torch.utils.data import DataLoader, Subset
 from sklearn.model_selection import train_test_split
 from torchvision import transforms
 
+from emotion_classifier.data_handling.ExpWDataset import ExpWDataset
+
+
 class ExpWDataModule:
     def __init__(self, label_file, img_dir, batch_size=32, val_split=0.15, test_split=0.15, r_s = 42):
         self.label_file = label_file

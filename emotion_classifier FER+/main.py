@@ -4,7 +4,7 @@ import kagglehub
 from data import FERDataModule
 from models import EmotionDetector
 from training import Trainer, Test, get_criterion
-from utils import Utils, test_dataloader_shapes, plot_samples_from_dataloader
+from utils import Utils
 from config import Config
 import torch.nn as nn
 
