@@ -10,10 +10,11 @@ class FERDataModule:
         self.batch_size = batch_size
         self.criterion = criterion
         self.image_size = (image_size, image_size)
-        self.emotion_map = {0: 'Angry', 1: 'Disgust', 2: 'Fear', 3: 'Happy', 
-                            4: 'Sad', 5: 'Surprise', 6: 'Neutral'}
+        self.emotion_map = {
+            0: 'Fear', 1: 'Happy', 2: 'Sad', 3: 'Surprise', 4: 'Neutral'
+        }
 
-        # Define transforms
+        # Transforms
         self.train_transform = train_transform or transforms.Compose([
             transforms.Resize((int(self.image_size[0] * 1.1), int(self.image_size[1] * 1.1))),
             transforms.RandomCrop(self.image_size),
@@ -36,17 +37,19 @@ class FERDataModule:
 
     def setup(self):
         self.train_dataset = FERPlusDataset(self.csv_path, usage='Training',
-                                            transform=self.train_transform, emotion_map=self.emotion_map)
+                                            transform=self.train_transform)
         self.val_dataset = FERPlusDataset(self.csv_path, usage='PrivateTest',
-                                          transform=self.val_transform, emotion_map=self.emotion_map)
+                                          transform=self.val_transform)
         self.test_dataset = FERPlusDataset(self.csv_path, usage='PublicTest',
-                                           transform=self.val_transform, emotion_map=self.emotion_map)
+                                           transform=self.val_transform)
 
         print(f"Train samples: {len(self.train_dataset)}")
         print(f"Validation samples: {len(self.val_dataset)}")
         print(f"Test samples: {len(self.test_dataset)}")
 
-    def train_dataloader(self, num_classes=7):
+    def train_dataloader(self):
+        num_classes = len(self.get_class_names())
+
         if self.criterion == 'mixup':
             mixup_fn = v2.RandomChoice([
                 v2.MixUp(alpha=0.4, num_classes=num_classes),
@@ -74,12 +77,12 @@ class FERDataModule:
         return DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2, pin_memory=True)
 
     def get_class_names(self):
-        return [self.emotion_map[i] for i in sorted(self.emotion_map.keys())]
+        return list(self.train_dataset.emotion_map.values())
 
     def get_class_weights(self):
         labels = [label for _, label in self.train_dataset]
         labels_tensor = torch.tensor(labels)
-        counts = torch.bincount(labels_tensor, minlength=7)
+        counts = torch.bincount(labels_tensor, minlength=len(self.get_class_names()))
         total = len(labels_tensor)
-        weights = total / (counts.float() * 7)
+        weights = total / (counts.float() * len(counts))
         return weights
