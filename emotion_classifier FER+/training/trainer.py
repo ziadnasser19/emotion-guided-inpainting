@@ -6,8 +6,10 @@ from sklearn.metrics import precision_recall_fscore_support
 from tqdm import tqdm
 import numpy as np
 
+
 class Trainer:
-    def __init__(self, model, train_loader, val_loader, config, device, criterion, EARLY_STOP_PATIENCE=None):
+    def __init__(self, model, train_loader, val_loader, config, device, criterion, optimizer, scheduler,
+                 progressive_unfreezing_frequency, EARLY_STOP_PATIENCE=None):
         self.history = {
             'train_loss': [], 'train_acc': [],
             'val_loss': [], 'val_acc': [], 'val_f1': [],
@@ -20,29 +22,29 @@ class Trainer:
         self.device = device
         self.early_stop_patience = EARLY_STOP_PATIENCE if EARLY_STOP_PATIENCE is not None else self.config.EARLY_STOP_PATIENCE
         self.criterion = criterion
-        
+        self.progressive_unfreezing_frequency = progressive_unfreezing_frequency
         # Enhanced optimizer with better regularization
-        self.optimizer = optim.AdamW(  # AdamW instead of Adam for better regularization
-            model.parameters(), 
-            lr=self.config.LEARNING_RATE, 
+        self.optimizer = optimizer or optim.AdamW(  # AdamW instead of Adam for better regularization
+            model.parameters(),
+            lr=self.config.LEARNING_RATE,
             weight_decay=self.config.WEIGHT_DECAY,
             betas=(0.9, 0.999),
             eps=1e-8
         )
-        
+
         # Enhanced learning rate scheduler
-        self.scheduler = ReduceLROnPlateau(
-            self.optimizer, 
-            mode='min', 
-            factor=0.5, 
-            patience=7, 
+        self.scheduler = scheduler or ReduceLROnPlateau(
+            self.optimizer,
+            mode='min',
+            factor=0.5,
+            patience=7,
             verbose=True,
             min_lr=getattr(self.config, 'MIN_LR', 1e-7)
         )
-        
+
         # Add gradient clipping
         self.gradient_clipping = getattr(self.config, 'GRADIENT_CLIPPING', None)
-        
+
         # Track overfitting metrics
         self.overfitting_threshold = 15.0  # If train_acc - val_acc > 15%, consider overfitting
 
@@ -55,12 +57,14 @@ class Trainer:
         best_model = None
 
         for epoch in range(self.config.NUM_EPOCHS):
+            if (epoch + 1) % self.progressive_unfreezing_frequency == 0:
+                self.model.progressively_unfreeze()
             # Training phase
             train_loss, train_acc = self._train_epoch(epoch)
-            
+
             # Validation phase
             val_loss, val_acc, val_f1, all_preds, all_labels = self._validate_epoch(epoch)
-            
+
             # Update history
             self.history['train_loss'].append(train_loss)
             self.history['train_acc'].append(train_acc)
@@ -69,8 +73,10 @@ class Trainer:
             self.history['val_f1'].append(val_f1)
             self.history['learning_rate'].append(self.optimizer.param_groups[0]['lr'])
 
-            # Update scheduler
-            self.scheduler.step(val_loss)
+            if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                self.scheduler.step(val_loss)  # val_loss from validation phase
+            else:
+                self.scheduler.step()  # for StepLR, CosineAnnealingLR, etc.
 
             # Check for overfitting
             overfitting_gap = train_acc - val_acc
@@ -83,38 +89,38 @@ class Trainer:
                 best_acc = val_acc
                 best_val_loss = val_loss
                 torch.save(self.model.state_dict(), self.config.BEST_MODEL_PATH)
-                best_model = self.model
+                best_model = copy.deepcopy(self.model.state_dict())
                 early_stop_counter = 0
-                print(f"✅ [Epoch {epoch+1}] Best model saved - Val F1: {best_f1:.4f}, Acc: {best_acc:.2f}%")
+                print(f"✅ [Epoch {epoch + 1}] Best model saved - Val F1: {best_f1:.4f}, Acc: {best_acc:.2f}%")
             else:
                 early_stop_counter += 1
 
             # Enhanced early stopping conditions
             should_stop = False
-            
+
             # Standard early stopping
             if early_stop_counter >= self.early_stop_patience:
                 print(f"Early stopping: No improvement for {self.early_stop_patience} epochs")
                 should_stop = True
-            
+
             # Overfitting-based early stopping
             if is_overfitting and train_acc > 85 and epoch > 10:
                 print(f"Early stopping: Severe overfitting detected (gap: {overfitting_gap:.1f}%)")
                 should_stop = True
-            
+
             # Loss explosion check
             if val_loss > 10.0 and epoch > 5:
                 print(f"Early stopping: Loss explosion detected (val_loss: {val_loss:.4f})")
                 should_stop = True
-                
+
             if should_stop:
                 break
 
             # Enhanced logging with overfitting detection
             overfitting_status = "🔥 OVERFITTING" if is_overfitting else "✅ Normal"
             lr = self.optimizer.param_groups[0]['lr']
-            
-            print(f"Epoch {epoch+1}/{self.config.NUM_EPOCHS} | "
+
+            print(f"Epoch {epoch + 1}/{self.config.NUM_EPOCHS} | "
                   f"Train Loss: {train_loss:.4f}, Acc: {train_acc:.2f}% | "
                   f"Val Loss: {val_loss:.4f}, Acc: {val_acc:.2f}%, F1: {val_f1:.4f} | "
                   f"Gap: {overfitting_gap:.1f}% {overfitting_status} | LR: {lr:.2e}")
@@ -123,15 +129,15 @@ class Trainer:
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"🏆 BEST MODEL SUMMARY")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Best Epoch: {best_epoch}")
         print(f"Best Validation F1: {best_f1:.4f}")
         print(f"Best Validation Accuracy: {best_acc:.2f}%")
         print(f"Best Validation Loss: {best_val_loss:.4f}")
         print(f"Model saved at: {self.config.BEST_MODEL_PATH}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         return self.history, best_epoch, best_f1, best_acc, best_model
 
@@ -142,7 +148,7 @@ class Trainer:
         correct = 0
         total = 0
 
-        train_bar = tqdm(self.train_loader, desc=f"Epoch {epoch+1} [Train]") \
+        train_bar = tqdm(self.train_loader, desc=f"Epoch {epoch + 1} [Train]") \
             if self.config.USE_TQDM else self.train_loader
 
         for inputs, labels in train_bar:
@@ -157,18 +163,18 @@ class Trainer:
 
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
-            
+
             if isinstance(labels, tuple):
                 loss = self.criterion(outputs, labels_a, labels_b, lam)
             else:
                 loss = self.criterion(outputs, labels)
 
             loss.backward()
-            
+
             # Apply gradient clipping if specified
             if self.gradient_clipping is not None:
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.gradient_clipping)
-            
+
             self.optimizer.step()
 
             running_loss += loss.item() * inputs.size(0)
@@ -178,14 +184,14 @@ class Trainer:
 
             if self.config.USE_TQDM:
                 train_bar.set_postfix(
-                    loss=running_loss / total, 
+                    loss=running_loss / total,
                     acc=100. * correct / total,
                     lr=f"{self.optimizer.param_groups[0]['lr']:.2e}"
                 )
 
         epoch_loss = running_loss / len(self.train_loader.dataset)
         epoch_acc = 100. * correct / total
-        
+
         return epoch_loss, epoch_acc
 
     def _validate_epoch(self, epoch):
@@ -197,14 +203,14 @@ class Trainer:
         all_preds = []
         all_labels = []
 
-        val_bar = tqdm(self.val_loader, desc=f"Epoch {epoch+1} [Val]") \
+        val_bar = tqdm(self.val_loader, desc=f"Epoch {epoch + 1} [Val]") \
             if self.config.USE_TQDM else self.val_loader
 
         with torch.no_grad():
             for inputs, labels in val_bar:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = self.model(inputs)
-                
+
                 # Use appropriate loss calculation
                 if hasattr(self.criterion, 'forward') and 'lam' in self.criterion.forward.__code__.co_varnames:
                     loss = self.criterion(outputs, labels, lam=1.0)  # Standard CE for validation
@@ -215,13 +221,13 @@ class Trainer:
                 _, predicted = torch.max(outputs, 1)
                 val_total += labels.size(0)
                 val_correct += (predicted == labels).sum().item()
-                
+
                 all_preds.extend(predicted.cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
 
                 if self.config.USE_TQDM:
                     val_bar.set_postfix(
-                        loss=val_loss / val_total, 
+                        loss=val_loss / val_total,
                         acc=100. * val_correct / val_total
                     )
 
