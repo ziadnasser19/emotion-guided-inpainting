@@ -11,7 +11,7 @@ class FERDataModule:
         self.criterion = criterion
         self.image_size = (image_size, image_size)
         self.emotion_map = {
-            0: 'Fear', 1: 'Happy', 2: 'Sad', 3: 'Surprise', 4: 'Neutral'
+            0: 'Happy', 1: 'Sad', 2: 'Surprise', 3: 'Neutral'
         }
 
         # Transforms

@@ -15,11 +15,11 @@ class FERPlusDataset(Dataset):
         self.transform = transform
 
         # Remap remaining labels to 0...n-1
-        original_to_new = {3: 0, 4: 1, 5: 2, 6: 3}
+        original_to_new = {2: 0, 3: 1, 4: 2, 5: 3, 6: 4}
         self.data['emotion'] = self.data['emotion'].map(original_to_new)
 
         self.emotion_map = {
-            0: 'Happy', 1: 'Sad', 2: 'Surprise', 3: 'Neutral'
+            0: 'Fear', 1: 'Happy', 2: 'Sad', 3: 'Surprise', 4: 'Neutral'
         }
 
     def __len__(self):
